@@ -1,0 +1,419 @@
+---
+title: "Introduction to Data Visualisation"
+author: "Kaan Hauser"
+date: "09/11/2024-23/11/2024"
+output: 
+  html_document:
+    theme: cosmo
+    toc: yes
+    toc_float:
+      collapsed: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# An Beginners Guide to Visualising Data with ggplot2
+
+Data visualisation is one of the most useful (and fun) skills to have as a novice data scientist like yourself. Whether you're creating bar charts for a future consultancy or illustrating ongoing geopolitical changes for a news agency; what you will learn in this tutorial can be translated into any field, as long as there's data!
+
+------------------------------------------------------------------------
+
+## Tutorial Plan:
+
+1.  Familiarise yourself with ggplot2
+
+2.  Start practicing with ggplot2 to make:
+
+    a)  Bar charts
+
+    b)  Pie charts
+
+    c)  Scatter plots
+
+    d)  Panel of all our plots
+
+3.  Exercises
+
+**All the data we will be working with throughout this tutorial can be accessed [here](https://www.kaggle.com/datasets/muhammadroshaanriaz/students-performance-dataset-cleaned?resource=download). Navigate to the top right of the page and download the zip file.**
+
+------------------------------------------------------------------------
+
+## Familiarise yourself with ggplot2
+
+### Cheat-sheet for ggplot2:
+
+You can refer to the following cheat-sheets when making your plots.
+
+![](images/ggplot%20cheatsheet.png)
+
+![](images/ggplot%20cheatsheet%202.png)
+
+------------------------------------------------------------------------
+
+### Different Charts and Their Purposes:
+
+![](images/chart_types.png)
+
+ggplot2 is part of the tidyverse package and is a great tool used by many data scientists to visually map-out findings from data. You might find that plotting is not difficult once you're comfortable with the basics, as it is built on a set *grammar of graphics* (think of this like a template). The grammar, as you will see, stays the same, and the options to customise your plots are endless. Lets dive right in to see how this works.
+
+------------------------------------------------------------------------
+
+## Start practicing with ggplot2
+
+### Bar Charts
+
+Open up RStudio and pull-up a new script. You can either select `file>new file>R script`, or you can simply press `cntrl+shift+n`.
+
+```{r}
+# script title
+# your name and the date
+
+# load the needed libraries. If you haven't used them before, don't forget to install.packages("packagename"). 
+library(tidyverse)
+library(gridExtra)
+```
+
+Now we need to import the data and inspect it:
+
+```{r}
+# import the data 
+student_performances <- read.csv("Cleaned_Students_Performance.csv")
+
+# inspect the data, you can simply click on the subset if you want to view the whole data set
+head(student_performances)
+```
+
+You can use the `head()` function like the code above shows, but usually I just prefer to use `View()`. I can that way scroll through the data and get a better overview, but it really comes down to whatever you're comfortable with.
+
+Either way, there's some pretty interesting data here! Let's start with something simple; we want to compare average test scores by gender. If you noticed the data contains binary variables (0, 1). We'll need to transform these into something more interpretable. Let's start by changing the observations under the "gender" column to "male" and "female". We can use the `factor()` function to do this:
+
+```{r}
+# change binary observations to 'male' and 'female' with the factor() function
+student_performances$gender <- factor(student_performances$gender, levels = c(0, 1), labels = c("Female", "Male"))
+```
+
+Great, now you'll see the gender observations have changed! Let's go ahead and do the same for lunch and test_preparation_course:
+
+```{r}
+# transform the remaining columns, again using the factor() function since we're changing numbers to words
+student_performances$test_preparation_course <- factor(student_performances$test_preparation_course, levels = c(0, 1), labels = c("No", "Yes"))
+student_performances$lunch <- factor(student_performances$lunch, levels = c(0, 1), labels = c("No", "Yes"))
+```
+
+Now we want to group our observations by gender so we can compare male vs. female as opposed to individual students. To do this we'll need to use the dplyr library (included in the tidyverse). Since we're grouping by gender, we'll also want to calculate the average of all "average_score"s that fall under each gender. We use the `group_by()` function we learned in the data manipulation tutorial to group data by gender. Then we'll use the `summarise()` function to calculate the averages.
+
+```{r}
+# group the data by gender with the group_by() function and calculate the average "average_score" of each gender with the summarise() function
+average_score_by_gender <- student_performances %>%
+  group_by(gender) %>%
+  summarise(avg_score = mean(average_score))
+
+# look at the results
+View(average_score_by_gender)
+```
+
+We can see that females on average scored higher than males; lets make a bar plot to visualise a comparison:
+
+```{r}
+# make a bar plot comparing the average scores of each gender
+# y-values (height of the bar) are already given, so we don't need to calculate anything with stat_count() etc.
+ggplot(average_score_by_gender, aes(x = factor(gender), y = avg_score, fill = factor(gender))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Test Scores of Each Gender",
+    x = "Gender", y = "Average Score") +
+  scale_fill_manual(values = c("pink", "skyblue")) +
+  theme_bw()
+```
+
+And there you have it!
+
+There's your first plot! Now let's break down the plotting grammar to see what each specific line does. This way, you'll be able to adopt this structure (or template) to any other visualisation project you put your mind to.
+
+------------------------------------------------------------------------
+
+### Breaking Down the Code:
+
+ggplot2 works by stacking multiple lines of code on top of each other, each line thereby adds an aesthetic value to the plot. The first line identifies the data and the axes, `aes()` defines any variations you want to include in your plot; we included a factor to identify gender categories. We can add a `+` sign to the end to build our next line of code. Note that `aes` stands for aesthethic – this will help you remember what it does. Essentially, the structure always follows as: `ggplot(dataframe_name, aes( x, y))`.
+
+```{r}
+ggplot(average_score_by_gender, aes(x = factor(gender), y = avg_score, fill = factor(gender))) +
+  geom_bar(stat = "identity")
+```
+
+Here we tell ggplot2 what kind of plot we want to make. If you want, go back to the top and look at the cheat-sheet; we chose to make a bar plot, hence the `geom_bar()` call. We use `"identity"` because we already calculated our y-values (the height of the bars, relative to the y-axis) with the `summarise()` function when getting the averages of each gender.
+
+Next, we can add titles with the `labs()` function, which we use to add a title and labels for the x and y axes:
+
+```{r}
+ggplot(average_score_by_gender, aes(x = factor(gender), y = avg_score, fill = factor(gender))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Test Scores of Each Gender",
+    x = "Gender", y = "Average Score")
+```
+
+Notice how we are essentially "stacking" code on top of each other, with each function being stacked on top of the other with a `+` symbol. Next, we can define the colour of each bar:
+
+```{r}
+ggplot(average_score_by_gender, aes(x = factor(gender), y = avg_score, fill = factor(gender))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Test Scores of Each Gender",
+    x = "Gender", y = "Average Score") +
+  scale_fill_manual(values = c("pink", "skyblue"))
+```
+
+The `scale_fill_manual()` function allows you to manually define colours. There are other options to colour your plots, but for the purpose of this first graph, a simple fill is sufficient. Don't worry, we're about to explore other options in the next examples. First let's cover the final layer of code; as you can guess, it defines the theme of the plot. There are various default themes included in tidyverse's ggplot2. For minimalist visualisation, I like to use `theme_bw()`. Feel free to explore what other themes might look like.
+
+```{r}
+ggplot(average_score_by_gender, aes(x = factor(gender), y = avg_score, fill = factor(gender))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Test Scores of Each Gender",
+    x = "Gender", y = "Average Score") +
+  scale_fill_manual(values = c("pink", "skyblue")) +
+  theme_bw()
+```
+
+------------------------------------------------------------------------
+
+### Dodged Bar Chart
+
+Now let's try to make something a little more complicated. Let's add another variable to our plot; let's add lunch! We would expect that people who take the test on a full stomach would do better than those who're hungry, right? Well, let's see what the data shows. First we need to create a new subset that includes lunch data. We can group the data by gender and lunch and then calculate the averages of each combination:
+
+```{r}
+# make a new subset that includes lunch data
+score_gender_lunch <- student_performances %>%
+  group_by(gender, lunch) %>%
+  summarise(avg_score = mean(average_score))
+```
+
+We'll need to make two separate bars for each gender to indicate the average score of those who had lunch and those who didn't. We can do so within the `geom_bar()` function by specifying `position = "dodge"`. If you do not specify `"dodge"` your bars will likely overlap and not be clear. I ran into that problem when first attempting to make this plot. Looking at Stack Overflow helped me figure this out.
+
+> ***NOTE:*** You can access the link [here](https://stackoverflow.com/questions/22793964/adjusting-geom-bar-position-dodge-in-ggplot). You'll find that there is another alternative to further customise 'dodge' options that will result in your plot looking slightly different than mine; feel free to try the other option as well!
+
+Anyway, let's see how the code for this plot would look:
+
+```{r}
+# start the bar plot the same way you did before, adding 'dodge' within your geom_bar() call after specifying 'identity' to transfer y-values.
+ggplot(score_gender_lunch, aes(x = gender, y = avg_score, fill = lunch)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Average Test Scores of Each Gender",
+       x = "Gender", y = "Average Score") +
+  scale_fill_manual(values = c("tomato1", "lightgreen")) +
+  theme_bw()
+```
+
+Indeed the hungry ones do worse than the others! Notice how I changed the colours of the bars. I tend to choose colours that accurately translate what the data is trying to convey. In the case of a yes/no situation, red and green felt appropriate to use. You can either specify colours by code, by name, or by using the colourpicker. I tend to simply google colour options to find suitable alternatives to generic 'red' and 'green', as these can be quite harsh on the eye.
+
+------------------------------------------------------------------------
+
+### Pie Charts
+
+Since we've learned how to make bar plots, let's make pie charts next. You'll notice that making a bar plot is essentially part of the pie chart process.
+
+> ***NOTE:*** You can refer to the following link [here](https://r-charts.com/part-whole/pie-chart-ggplot2/?utm_content=cmp-true) for further details on pie charts in R.
+
+Let's say we want to find out the proportions of `parental_level_of_education`. We can see that there are various obsevrations: bacherlor's, master's, associate's....The data set is quite long and we don't want to count each unique observation one by one. So, let's start by identifying the number of unique observations under the `parental_level_of_education` column:
+
+```{r}
+# use the unique() function to indentify the total number of unique observations under a specified column
+unique(student_performances$parental_level_of_education)
+```
+
+We see 6 different variables, now we need to calculate what proportion/share of parents obtained which education level. We can figure this out by calculating their percentages before we start plotting. You'll remember that the `summarise()` function can be used for calculations:
+
+```{r}
+# calculate the percentages of education level distribution among parents. 
+education_level_percentages <- student_performances %>%
+  count(parental_level_of_education) %>%
+  mutate(proportion = n / sum(n) * 100)
+```
+
+> ***NOTE:*** We referred to the following link accessible [here](https://www.geeksforgeeks.org/how-to-calculate-percentage-by-group-in-r/) to learn how percentages can be calculated before making a pie chart.
+
+Now that we have a new subset in our environment, we can start plotting. We'll start by doing a bar chart before essentially transforming it into a pie chart. One thing to keep in mind is to include `width = 1` in your bar chart. Otherwise the plot won't exactly be a pie chart in the traditional sense.
+
+> ***NOTE:*** We referred to the following links accessible [here](https://www.datanovia.com/en/blog/how-to-create-a-pie-chart-in-r-using-ggplot2/) and [here](https://r-charts.com/part-whole/pie-chart-ggplot2/) as a guide to making pie charts, specifically in helping with arguments within the geom_bar () and coord_polar() functions.
+
+```{r}
+# start plotting the pie chart. Include width = 1 in your geom_bar() call and specify the coord_polar()
+ggplot(education_level_percentages, aes(x = "", y = proportion, fill = parental_level_of_education)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  labs(title = "Distribution of Parents' Education Levels") +
+  theme_bw()
+```
+
+Great, we now have a pie chart! We can further customise this; for example, let's get rid of the weird axis and proportion labels. We also want to get rid of the title above the legend on the right, because it's kind of redundant since the legend is pretty self-explanatory. Also, **always make sure the charts are easy to interpret**. The colours for master's degree and "some college" are too similar, we want to make sure each portion is distinct and clearly visible.
+
+> ***NOTE:*** A simple trick to findings distinguishable colour palettes is to use Brewer palettes. These are integrated R packages by Cynthia A. Brewer, you can read more about Brewer Packages [here](https://jmsallan.netlify.app/blog/the-brewer-palettes/).
+
+```{r}
+# use theme_void() to remove the axes
+# indicate the Brewer palette with scale_fill_brewer()
+# remove the title of the legend with element_blank() within your theme() call
+ggplot(education_level_percentages, aes(x = "", y = proportion, fill = parental_level_of_education)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  labs(title = "Distribution of Parents' Education Levels") +
+  theme_void() +
+  scale_fill_brewer(palette = "Blues") +
+  theme(legend.title = element_blank())
+```
+
+Much better, the colours are clearly distinguishable and the minimalist design reduces clutter. Bear in mind that a significant part of your initial plots will involve lots of trial and error. Even if your grammar is correct, you may not immediately get the result you envisioned on your first try.
+
+> ***NOTE:*** In these instances googling your troubleshooting questions will come in handy, you might even learn something new. For example, to figure out how to get rid of the legend title, I looked at the following [question](https://stackoverflow.com/questions/14771546/remove-legend-title-in-ggplot) on Stack Overflow. This is a great resource where you're likely to encounter answers to problems you're running in to.
+
+Note that we can essentially express the same data in the form of a stacked bar chart. This is because the overall height of the bar (y-value) is equal to 100%, wherefore each proportion within the bar represents a percentage share. Let's see how this would look, we will also further optimise our plot by arranging education levels hierarchically.
+
+```{r}
+# first, define your hierarchical order
+hierarchy <- c("master's degree", "bachelor's degree", "some college", "associate's degree", "high school", "some high school")
+
+
+# next, overwrite the education levels subset with your defined hierarchy
+education_level_percentages$parental_level_of_education <- factor(education_level_percentages$parental_level_of_education, levels = hierarchy)
+```
+
+Now we can plot to see if our changes have been applied. We'll also use a different theme and palette to mix things up and see how other options look:
+
+```{r}
+# make a bar plot with a different colour palette and theme
+ggplot(education_level_percentages, aes(x = "", y = proportion, fill = parental_level_of_education)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Proportional Distribution of Parents' Education Levels") +
+  theme_classic() +
+  scale_fill_brewer(palette = "Reds") +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        legend.title = element_blank())
+```
+
+------------------------------------------------------------------------
+
+### Scatter Plots
+
+We generally use scatter plots to demonstrate a correlation between two variables. For example, we could create a plot to show the correlation between math and reading scores. We would assume that, generally speaking, students who score high on one subject would also score high in another. Let's make a scatter plot to test this correlation. We don't need to create a new subset, as all the data we need is already in the original student_performances set.
+
+```{r}
+# assign reading_score to the x-axis and math_score to the y-axis
+# use geom_point() to speficy the scatter plot
+# specify the title in labs() as usual
+# identify the axes titles using the xlab() ylab() functions
+# this way you don't need to overwrite your original data set with rename() etc. 
+ggplot(student_performances, aes(x = reading_score, y = math_score, colour = gender, shape = lunch)) + 
+  geom_point() +
+  labs(title = "Corrolation Between Maths and Reading Scores") +
+  xlab("Reading Score") + 
+  ylab("Math Score") +
+  theme_light()
+```
+
+You'll see that we not only have tried a different theme, but we also specified our axes names. If we hadn't done so, we'd get underscores in our labels, similar to the `parental_level_of_education` in our first pie chart. Technically we wouldn't need to do this had we renamed our columns with the `rename()` function when first tidying the data set. However, it's usually easier to just specify it with `xlab()` and `ylab()`.
+
+We can see that students generally scored high on reading if they scored high in math, and vice versa. We can also see the gender and lunch data of each observation, neat!
+
+> ***NOTE:*** There are plenty of ways you can customise the the shapes, sizes and even colours of the points in your scatter plot. [Here](https://www.sthda.com/english/wiki/ggplot2-point-shapes) is a link where you can view further customisation options.
+
+------------------------------------------------------------------------
+
+### Making a Panel
+
+Panels are good if you want to compile multiple plots that deal with the same data but indicate different findings. To make a panel we will need to use gridExtra, which we loaded at the start of the tutorial. If you forgot to do this, make sure to install/load it now:
+
+```{r}
+#install if you haven't already
+install.packages("gridExtra")
+
+#load it once you have it installed
+library(gridExtra)
+```
+
+Great, now we can specify which plots we want to include in our panel using the `grid.arrange()` function. At this point we need to assign our plots; you can simply save your plots in your environment. To do this you need to copy your ggplot code and assign it the following way – we'll start with the "average scores by gender" plot to demonstrate:
+
+```{r}
+# save your plots to your environment
+plot1 <- ggplot(average_score_by_gender, aes(x = factor(gender), y = avg_score, fill = gender)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Test Scores of Each Gender",
+       x = "Gender", y = "Average Score") +
+  scale_fill_manual(values = c("pink", "skyblue")) +
+  theme_bw()
+```
+
+You'll see that `plot1` is now saved to your environment. Now let's do it for our other plots. We'll use the lunch data plot, the blue pie chart and the scatter plot:
+
+```{r}
+# the lunch data
+plot2 <- ggplot(score_gender_lunch, aes(x = gender, y = avg_score, fill = lunch)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Average Test Scores of Each Gender",
+       x = "Gender", y = "Average Score") +
+  scale_fill_manual(values = c("tomato1", "lightgreen")) +
+  theme_bw()
+
+# the blue pie chart
+plot3 <- ggplot(education_level_percentages, aes(x = "", y = proportion, fill = parental_level_of_education)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Distribution of Parents' Education Levels") +
+  theme_void() +
+  scale_fill_brewer(palette = "Blues") +
+  theme(legend.title = element_blank())
+
+# and lastly the scatter plot
+plot4 <- ggplot(student_performances, aes(x = reading_score, y = math_score, colour = gender, shape = lunch)) + 
+  geom_point() +
+  labs(title = "Corrolation Between Maths and Reading Scores") +
+  xlab("Reading Score") + 
+  ylab("Math Score") +
+  theme_light()
+```
+
+Now that everything's in your environment, all we need to do is create the actual panel. We do this with the `grid.arrange()` function. You can specify the structure of your panel with `ncol` within your `grid.arrange()` function. Since we have four plots, a panel with two columns should work nicely.
+
+```{r}
+# make a pannel and specify the column number with "ncol"
+grid.arrange(plot1, plot2, plot3, plot4, ncol = 2)
+```
+
+Congrats, you have successfully made 4 different plots; you're a natural! One thing to note is the hierarchy of the pie chart. If you remember correctly, we defined the hierarchy after making the blue pie chart. Therefore, our initial blue pie did not have the hierarchy applied to itself. However, when making the panel we automatically recreated the plot with the applied hierarchy.
+
+This is because this stage followed after the hierarchy was defined. Once you assign a hierarchy value to your environment, it will start to apply this to the next plots automatically, so long as you overwrote the data set you are plotting with. If, of course, you are working with a separate subset where the hierarchy is not relevant, it will be excluded.
+
+Regardless, it is now time for you to challenge yourself. Have a go at the following exercises below.
+
+------------------------------------------------------------------------
+
+### Exercises
+
+1- What goes into the `aes()` brackets?
+
+2- What is the relation between a stacked bar chart and a pie chart?
+
+3- Where would you the title of a plot specified?
+
+4- Do you have to rename columns before plotting, or can you specify the labels another way?
+
+5- How do you remove a title and/or label from your plot?
+
+6- What is the purpose of a panel and which library do we need to make one?
+
+------------------------------------------------------------------------
+
+### Wrap-up:
+
+In this tutorial we have covered how to make:
+
+1.  Bar plots
+
+2.  Dodged bar plots
+
+3.  Pie charts
+
+4.  Scatter plots
+
+5.  A panel of all our plots
+
+You hopefully familiarised yourself with the grammar of graphics and understand the basics of cumstomisation. If you want to explore plotting further, the following [tutorial](https://r4ds.had.co.nz/data-visualisation.html) is incredibly useful.
