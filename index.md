@@ -163,8 +163,6 @@ ggplot(Orange, aes(x = age, y = circumference)) +
   geom_point()
 ```
 
-![](index_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
-
 Here we tell ggplot2 what kind of plot we want to make. If you want, go back to the top and look at the cheat-sheet; we chose to make a scatter plot, hence the `geom_point()` call.
 
 Next, we can add titles with the `labs()` function, we can use `xlabs()` and `ylabs()` to label our axes as well:
