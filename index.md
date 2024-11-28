@@ -138,10 +138,11 @@ ggplot(Orange, aes(x = age, y = circumference)) +
   geom_point() +
   labs(title = "Corrolation Between Orange Tree Age and Circumference") +
   xlab("Age of Tree (days)") +
-  ylab("Trunk Circumference (mm)")
+  ylab("Trunk Circumference (mm)") +
+  scale_colour_gradient(low = "blue", high = "red") +
+  theme_bw()
 ```
-
-![](index_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](plots/orange.plot)
 
 Great, there is our first plot! As you can see, our assumption was right, trunk circumference does indeed increase with age.
 
