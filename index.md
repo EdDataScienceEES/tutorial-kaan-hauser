@@ -142,7 +142,7 @@ ggplot(Orange, aes(x = age, y = circumference)) +
   scale_colour_gradient(low = "blue", high = "red") +
   theme_bw()
 ```
-![](plots/orange.plot)
+![orange.plot](plots/orange.plot)
 
 Great, there is our first plot! As you can see, our assumption was right, trunk circumference does indeed increase with age.
 
